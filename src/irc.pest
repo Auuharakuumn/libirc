@@ -1,0 +1,55 @@
+message = { SOI ~ (":" ~ prefix ~ " ")? ~ command ~ (params)? ~ "\r\n" ~ EOI }
+prefix = { servername | username }
+command = { textcommand | numresponse }
+params = {
+            ((" " ~ middle){,14} ~ (" " ~ ":" ~ trailing)?) |
+            ((" " ~ middle){14} ~ (" " ~ (":")? ~ trailing)?)
+}
+
+textcommand = @{ (ASCII_ALPHA)+ }
+numresponse = @{ (ASCII_DIGIT){3} }
+
+nonspecial = @{ !("\0" | "\r" | "\n" | " " | ":") ~ ANY }
+middle = @{ nonspecial ~ (":" | nonspecial)* }
+trailing = @{ (":" | " " | nonspecial)* }
+
+target = { nickname | servername }
+msgtarget = { msgto ~ ("," ~ msgto)* }
+msgto = { 
+            channel | 
+            (user ~ ("%" ~ host)? ~ "@" ~ servername) |
+            (user ~ "%" ~ host) |
+            targetmask |
+            nickname |
+            (nickname ~ "!" ~ user ~ "@" ~ host)
+}
+channel = { ("#" | "+" | ("!" ~ channelid) | "&") ~ chanstring ~ (":" ~ chanstring)? }
+servername = @{ hostname }
+username = { ( nickname ~ (("!" ~ user)? ~ "@" ~ host)?) }
+host = @{ hostname | hostaddr }
+hostname = { shortname ~ ("." ~ shortname)* }
+shortname = { 
+                (ASCII_ALPHA | ASCII_DIGIT) ~ 
+                (ASCII_ALPHA | ASCII_DIGIT | "-")* ~ 
+                (ASCII_ALPHA | ASCII_DIGIT)*
+            }
+hostaddr = { ip4addr | ip6addr }
+ip4addr = { (ASCII_DIGIT){1,3} ~ "." ~ (ASCII_DIGIT){1,3} ~ "." ~ (ASCII_DIGIT){1,3} ~ "." ~ (ASCII_DIGIT){1,3} }
+ip6addr = {
+            ((ASCII_HEX_DIGIT)+ ~ (":" ~ (ASCII_HEX_DIGIT)+){7}) |
+            ("0:0:0:0:0:" ~ ("0" | "FFFF") ~ ":" ~ ip4addr)
+}
+nickname = @{ (ASCII_ALPHA | special) ~ (ASCII_ALPHA | ASCII_DIGIT | special | "-"){,8} }
+targetmask = { ("$" | "#") ~ mask }
+chanstring = { (!("\0" | "\u{07}" | "\r" | "\n" | " " | "," | ":") ~ ANY)+  }
+channelid = { (ASCII_ALPHA_UPPER | ASCII_DIGIT){5} }
+
+user = @{ (!("\0" | "\r" | "\n" | " " | "@") ~ ANY)+ }
+special = { ('\u{5B}'..'\u{60}' | '\u{7B}'..'\u{7D}') }
+
+mask = { (nowild | (noesc ~ wildone) | (noesc ~ wildmany))* }
+wildone = { "?" }
+wildmany = { "*" }
+nowild = { !("\0" | "?" | "*") ~ ANY }
+noesc = { !("\0" ~ "\\") ~ ANY }
+
