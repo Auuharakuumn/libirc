@@ -1,6 +1,7 @@
 extern crate pest;
 extern crate pest_derive;
 extern crate csv;
+extern crate libirc_derive;
 
 pub mod message;
 pub mod constants; 

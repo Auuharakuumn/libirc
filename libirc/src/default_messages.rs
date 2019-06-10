@@ -1,218 +1,229 @@
 #![allow(dead_code)]
 
+use libirc_derive::IrcCommand;
+
+#[derive(IrcCommand)]
 struct Admin {
-    command: String,
-    target: String
+    target: Optional<String>
 }
 
+#[derive(IrcCommand)]
 struct Away {
-    command: String,
-    message: String
+    message: Optional<String>
 }
 
+#[derive(IrcCommand)]
 struct CNotice {
-    command: String,
     nickname: String,
     channel: String,
+    #[trailing]
     message: String
 }
 
+#[derive(IrcCommand)]
 struct CPrivMessage {
-    command: String,
     nickname: String,
     channel: String,
+    #[trailing]
     message: String
 }
 
+#[derive(IrcCommand)]
 struct Connect {
-    command: String,
     target_server: String,
-    port: Option<String>,
+    port: String,
     remote_server: Option<String>
 }
 
+#[derive(IrcCommand)]
 struct Die {
-    command: String
 }
 
+#[derive(IrcCommand)]
 struct Encap {
+    #[prefix]
     source: String,
-    command: String,
     destination: String,
-    subcommand: String,
     parameters: String
 }
 
+#[derive(IrcCommand)]
 struct Error {
-    command: String,
     error_message: String
 }
 
+#[derive(IrcCommand)]
 struct Help {
-    command: String
 }
 
+#[derive(IrcCommand)]
 struct Info {
-    command: String,
-    target: String
+    target: Option<String>
 }
 
+#[derive(IrcCommand)]
 struct Invite {
-    command: String,
     nickname: String,
     channel: String
 }
 
+#[derive(IrcCommand)]
 struct IsOn {
-    command: String,
+    #[seperator = " "]
     nicknames: Vec<String>,
 }
 
+#[derive(IrcCommand)]
 struct Join {
-    command: String,
+    #[seperator = ","]
     channels: Vec<String>,
+    #[seperator = ","]
     keys: Option<Vec<String>>,
 }
 
+#[derive(IrcCommand)]
 struct Kick {
-    command: String,
     channel: String,
     client: String,
-    message: String,
+    #[trailing]
+    message: Option<String>,
 }
 
+#[derive(IrcCommand)]
 struct Kill {
-    command: String,
     client: String,
     comment: String,
 }
 
+#[derive(IrcCommand)]
 struct Knock {
-    command: String,
     channel: String,
     message: Option<String>,
 }
 
+#[derive(IrcCommand)]
 struct Links {
-    command: String,
     remote_server: Option<String>,
     server_mask: Option<String>,
 }
 
+#[derive(IrcCommand)]
 struct List {
-    command: String,
+    #[seperator = ","]
     channels: Option<Vec<String>>,
     server: Option<String>,
 }
 
+#[derive(IrcCommand)]
 struct LUsers {
-    command: String,
     mask: Option<String>,
     server: Option<String>,
 }
 
+#[derive(IrcCommand)]
 struct UserMode {
-    command: String,
     nickname: String,
     flags: String,
     user: String,
 }
 
+#[derive(IrcCommand)]
 struct ChannelMode {
-    command: String,
     channel: String,
     flags: String,
-    args: Option<Vec<String>>,
+    args: Option<String>,
 }
 
+#[derive(IrcCommand)]
 struct Motd {
-    command: String,
     server: Option<String>,
 }
 
+#[derive(IrcCommand)]
 struct Names {
-    command: String,
+    #[seperator = ","]
     channels: Option<Vec<String>>,
     server: Option<String>,
 }
 
+#[derive(IrcCommand)]
+#[command = "PROTOCTL NAMESX"]
 struct Namesx {
-    command: String
 }
 
+#[derive(IrcCommand)]
 struct Nick {
-    command: String,
     nickname: String,
-    hopcount: Option<String>,
 }
 
+#[derive(IrcCommand)]
 struct Notice {
-    command: String,
     target: String,
     message: String,
 }
 
+#[derive(IrcCommand)]
 struct Oper {
-    command: String,
     username: String,
     password: String,
 }
 
+#[derive(IrcCommand)]
 struct Part {
-    command: String,
+    #[seperator = ","]
     channels: Vec<String>,
     message: Option<String>,
 }
 
+#[derive(IrcCommand)]
 struct Pass {
-    command: String,
     password: String,
 }
 
+#[derive(IrcCommand)]
 struct Ping {
-    command: String,
     server1: String,
     server2: Option<String>,
 }
 
+#[derive(IrcCommand)]
 struct Pong {
-    command: String,
     server1: String,
     server2: Option<String>,
 }
 
+#[derive(IrcCommand)]
 struct PrivMsg {
-    command: String,
     target: String,
     message: String,
 }
 
+#[derive(IrcCommand)]
 struct Quit {
-    command: String,
     message: Option<String>,
 }
 
+#[derive(IrcCommand)]
 struct Rehash {
-    command: String
 }
 
+#[derive(IrcCommand)]
 struct Restart {
-    command: String
 }
 
+#[derive(IrcCommand)]
 struct Rules {
-    command: String
 }
 
+#[derive(IrcCommand)]
 struct Server {
-    command: String,
     server: String,
     hopcount: String,
     info: String,
 }
 
+#[derive(IrcCommand)]
 struct Service {
-    command: String,
     nickname: String,
     reserved1: String,
     distribution: String,
@@ -221,120 +232,123 @@ struct Service {
     info: String,
 }
 
+#[derive(IrcCommand)]
 struct ServList {
-    command: String,
     mask: Option<String>,
     service_type: Option<String>,
 }
 
+#[derive(IrcCommand)]
 struct SQuery {
-    command: String,
     service: String,
     text: String,
 }
 
+#[derive(IrcCommand)]
 struct SQuit {
-    command: String,
     server: String,
     comment: String,
 }
 
+#[derive(IrcCommand)]
 struct SetName {
-    command: String,
     name: String,
 }
 
+// TODO: Watch and Silence will probably need manual implementations
 struct Silence {
-    command: String,
     mask: Option<Vec<(String, bool)>>,
 }
 
+#[derive(IrcCommand)]
 struct Stats {
-    command: String,
     query: String,
     server: Option<String>,
 }
 
+#[derive(IrcCommand)]
 struct Summon {
-    command: String,
     user: String,
     server: Option<String>,
     channel: Option<String>,
 }
 
+#[derive(IrcCommand)]
 struct Time {
-    command: String,
     server: Option<String>,
 }
 
+#[derive(IrcCommand)]
 struct Topic {
-    command: String,
     channel: String,
     topic: Option<String>,
 }
 
+#[derive(IrcCommand)]
 struct Trace {
-    command: String,
     target: Option<String>,
 }
 
+#[derive(IrcCommand)]
+#[command = "PROTOCTL UHNAMES"]
 struct UHNames {
-    command: String
 }
 
+#[derive(IrcCommand)]
 struct User {
-    command: String,
     user: String,
     mode: String,
     unused: String,
     realname: String,
 }
 
+#[derive(IrcCommand)]
 struct UserHost {
-    command: String,
     nickname: String,
+    #[seperator = " "]
     extra_nicknames: Option<Vec<String>>,
 }
 
+#[derive(IrcCommand)]
 struct UserIP {
-    command: String,
     nickname: String,
 }
 
+#[derive(IrcCommand)]
 struct Users {
-    command: String,
     server: Option<String>,
 }
 
+#[derive(IrcCommand)]
 struct Version {
-    command: String,
     server: Option<String>,
 }
 
+#[derive(IrcCommand)]
 struct WAllOps {
-    command: String,
     message: String,
 }
 
+// TODO: Watch and Silence will probably need manual implementations
 struct Watch {
-    command: String,
     nicknames: Option<Vec<(String, bool)>>,
 }
 
+#[derive(IrcCommand)]
 struct Who {
-    command: String,
     name: Option<String>,
     o: bool,
 }
 
+#[derive(IrcCommand)]
 struct WhoIs {
-    command: String,
     server: Option<String>,
+    #[seperator = ","]
     nicknames: Vec<String>
 }
 
+#[derive(IrcCommand)]
 struct WhoWas {
-    command: String,
     nickname: String,
     count: Option<String>,
     server: Option<String>,
