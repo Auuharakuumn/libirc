@@ -10,5 +10,10 @@ edition = "2018"
 proc-macro = true
 
 [dependencies]
-syn = "0.15.35"
+#syn = "0.15.35"
 quote = "0.6.12"
+
+[dependencies.syn]
+version = "0.15.35"
+default-features = false
+features = ["full", "derive", "parsing", "printing", "clone-impls", "proc-macro", "extra-traits"]

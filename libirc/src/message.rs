@@ -4,7 +4,7 @@ use pest::Parser;
 
 use std::str::FromStr;
 
-trait IrcMessage {
+pub trait IrcMessage {
     fn parse_message(message: BaseMessage) -> Result<Box<Self>, Box<std::error::Error>>;
     fn create_message(&self) -> String;
 }
@@ -13,6 +13,15 @@ trait IrcMessage {
 pub enum Command {
     IrcCommand(String),
     IrcResponse(String)
+}
+
+impl ToString for Command {
+    fn to_string(&self) -> String {
+        match self {
+            Command::IrcCommand(cmd) => cmd,
+            Command::IrcResponse(cmd) => cmd,
+        }.to_string()
+    }
 }
 
 #[derive(Debug)]

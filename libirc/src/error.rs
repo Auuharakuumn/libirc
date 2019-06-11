@@ -42,3 +42,37 @@ impl fmt::Debug for ConfigReadError {
     }
 }
 
+pub struct IrcCommandError {
+    description: String
+}
+
+impl IrcCommandError {
+    pub fn new<S: Into<String>>(details: S) -> Self {
+       IrcCommandError {
+           description: format!("Error: {}", details.into())
+       }
+    }
+}
+
+impl Error for IrcCommandError {
+    fn description(&self) -> &str {
+        &self.description
+    }
+
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
+    }
+}
+
+impl fmt::Display for IrcCommandError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", &self.description)
+    }
+}
+
+impl fmt::Debug for IrcCommandError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{{ file: {}, line: {} }}", file!(), line!())
+    }
+}
+

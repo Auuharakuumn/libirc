@@ -1,15 +1,18 @@
 #![allow(dead_code)]
 
 use libirc_derive::IrcCommand;
+use crate::message::IrcMessage;
+use crate::message::BaseMessage;
+use crate::error::IrcCommandError;
 
 #[derive(IrcCommand)]
 struct Admin {
-    target: Optional<String>
+    target: Option<String>
 }
 
 #[derive(IrcCommand)]
 struct Away {
-    message: Optional<String>
+    message: Option<String>
 }
 
 #[derive(IrcCommand)]
@@ -48,7 +51,8 @@ struct Encap {
 }
 
 #[derive(IrcCommand)]
-struct Error {
+#[command = "ERROR"]
+struct ErrorCommand {
     error_message: String
 }
 
