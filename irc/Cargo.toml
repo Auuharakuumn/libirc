@@ -1,5 +1,5 @@
 [package]
-name = "libirc"
+name = "irc"
 version = "0.1.0"
 authors = ["Michael Foley <mfoley@mfoley.xyz>"]
 edition = "2018"
@@ -10,4 +10,4 @@ edition = "2018"
 pest = "2.1.1"
 pest_derive = "2.1.0"
 csv = "1"
-libirc_derive = { path = "../libirc_derive" }
+irc_derive = { path = "../irc_derive" }

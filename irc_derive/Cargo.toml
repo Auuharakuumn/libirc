@@ -1,5 +1,5 @@
 [package]
-name = "libirc_derive"
+name = "irc_derive"
 version = "0.1.0"
 authors = ["Michael Foley <mfoley@mfoley.xyz>"]
 edition = "2018"

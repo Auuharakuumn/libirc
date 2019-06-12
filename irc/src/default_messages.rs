@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use libirc_derive::IrcCommand;
+use irc_derive::IrcCommand;
 use crate::message::IrcMessage;
 use crate::message::BaseMessage;
 use crate::error::IrcCommandError;

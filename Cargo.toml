@@ -1,5 +1,5 @@
 [workspace]
 members = [
-    "libirc",
-    "libirc_derive",
+    "irc",
+    "irc_derive",
 ]
