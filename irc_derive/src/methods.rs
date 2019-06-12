@@ -63,8 +63,10 @@ impl CommandFields {
             });
         }
 
-        // TODO: implement
-        for arg_field in &self.arg_fields {
+        let mut arg_sections: Vec<TokenStream2> = Vec::new();
+        let mut optional_arg_count: usize = 0;
+
+        for (i, arg_field) in self.arg_fields.iter().enumerate() {
             let arg = arg_field.ident.clone().unwrap();
             let arg_build = syn::Ident::new(&format!("{}_build", arg), arg.span());
 
@@ -90,31 +92,69 @@ impl CommandFields {
                     }
                 };
 
-                if arg_field.ty == option_vector {
+                let vector = if separator == " " {
                     quote! {
-                        let #arg_build: Option<Vec<String>> = None;
+                        arguments[#i..arguments.len()].to_vec()
                     }
                 } else {
                     quote! {
-                        let #arg_build: Vec<String> = vec![String::from(#separator)];
+                        arguments[#i].split(#separator)
+                    }
+                };
+
+                if arg_field.ty == option_vector {
+                    optional_arg_count += 1;
+
+                    quote! {
+                        let #arg_build: Option<Vec<String>> = if arguments.len() > #i {
+                            Some(#vector)
+                        } else {
+                            None
+                        };
+                    }
+                } else {
+                    quote! {
+                        let #arg_build: Vec<String> = #vector;
                     }
                 }
             } else {
                 if arg_field.ty == option_string {
+                    optional_arg_count += 1;
+
                     quote! {
-                        let #arg_build: Option<String> = None;
+                        let #arg_build: Option<String> = if arguments.len() > #i {
+                            Some(argments[#i].clone())
+                        } else {
+                            None
+                        };
                     }
                 } else {
                     quote! {
-                        let #arg_build: String = String::from("");
+                        let #arg_build: String = arguments[#i].clone();
                     }
                 }
             };
 
-            method_sections.push(arg_section);
+            arg_sections.push(arg_section);
             struct_create_sections.push(quote! {
                 #arg: #arg_build,
             });
+        }
+
+        let arg_count = arg_sections.len();
+        if arg_count > 0 {
+            let arg_section = quote! {
+                let arguments = message.parameters?.middle.clone();
+                if (arguments.len() < #arg_count - #optional_arg_count) {
+                    let err = format!("Insufficient parameter count for {}", cmd);
+                    
+                    return Err(Box::new(IrcCommandError::new(err)));
+                }
+
+                #(#arg_sections)*
+            };
+
+            method_sections.push(arg_section);
         }
 
         quote! {
