@@ -3,6 +3,7 @@ use pest::error::Error;
 use pest::Parser;
 
 use std::str::FromStr;
+use std::fmt;
 
 pub trait IrcMessage {
     fn parse_message(message: BaseMessage) -> Result<Box<Self>, Box<dyn std::error::Error>>;
@@ -15,12 +16,14 @@ pub enum Command {
     IrcResponse(String)
 }
 
-impl ToString for Command {
-    fn to_string(&self) -> String {
-        match self {
+impl fmt::Display for Command {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let command = match self {
             Command::IrcCommand(cmd) => cmd,
             Command::IrcResponse(cmd) => cmd,
-        }.to_string()
+        }.to_string();
+
+        write!(f, "{}", command)
     }
 }
 
@@ -31,16 +34,60 @@ pub struct UserPrefix {
     pub host: Option<String>
 }
 
+impl fmt::Display for UserPrefix {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut prefix = self.nickname.clone();
+        
+        match self.host {
+            Some(ref host) => {
+                match self.user {
+                    Some(ref user) => {
+                        prefix.push_str(&format!("!{}", user));
+                    },
+                    None => {}
+                }
+                prefix.push_str(&format!("@{}", host));
+            },
+            None => {}
+        }
+
+        write!(f, "{}", prefix)
+    }
+}
+
 #[derive(Debug)]
 pub enum Prefix {
     ServerName(String),
     UserName(UserPrefix)
 }
 
+impl fmt::Display for Prefix {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let prefix = match self {
+            Prefix::ServerName(p) => p.to_string(),
+            Prefix::UserName(up) => up.to_string()
+        };
+
+        write!(f, "{}", prefix)
+    }
+}
+
 #[derive(Debug)]
 pub struct Parameters {
     pub middle: Vec<String>,
     pub trailing: Option<String>
+}
+
+impl fmt::Display for Parameters {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let middle = self.middle.join(" ");
+        
+        if let Some(ref trailing) = self.trailing {
+            write!(f, "{} :{}", middle, trailing)
+        } else {
+            write!(f, "{}", middle)
+        }
+    }
 }
 
 #[derive(Parser)]
@@ -54,13 +101,29 @@ pub struct BaseMessage {
     pub parameters: Option<Parameters>
 }
 
+impl fmt::Display for BaseMessage {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut message = String::from("");
+
+        if let Some(ref prefix) = self.prefix {
+            message.push_str(&format!("{} ", &prefix.to_string()));
+        }
+
+        message.push_str(&self.command.to_string());
+
+        if let Some(ref parameters) = self.parameters {
+            message.push_str(&format!(" {}", &parameters.to_string()));
+        }
+
+        write!(f, "{}", message)
+    }
+}
+
 impl FromStr for BaseMessage {
     type Err = Error<Rule>;
 
     fn from_str(message: &str) -> Result<Self, Self::Err> {
         let parse_result = IrcParser::parse(Rule::message, message);
-        ////println!("{:?}", parse_result);
-
         let message_pairs = parse_result?.next().unwrap().into_inner();
 
         let mut prefix: Option<Prefix> = None;
@@ -70,15 +133,12 @@ impl FromStr for BaseMessage {
         for pair in message_pairs {
             match pair.as_rule() {
                 Rule::prefix => {
-                    //println!("Prefix Pair: {:?}\n\n", pair);
                     prefix = parse_prefix(pair);
                 }
                 Rule::command => {
-                    //println!("Command Pair: {:?}\n\n", pair);
                     command = parse_command(pair);
                 }
                 Rule::params => {
-                    //println!("Param Pair: {:?}\n\n", pair);
                     parameters = parse_parameters(pair);
                 }
                 _ => {}
@@ -99,11 +159,9 @@ fn parse_prefix(pair: pest::iterators::Pair<Rule>) -> Option<Prefix> {
     for p in pairs {
         match p.as_rule() {
             Rule::servername => {
-                //println!("ServerName Pair: {:?}\n\n", p);
                 return Some(Prefix::ServerName(String::from(p.as_str())));
             }
             Rule::username => {
-                //println!("UserName Pair: {:?}\n\n", p);
                 let username_pair = p.into_inner();
                 let mut nickname: String = String::from("");
                 let mut user: Option<String> = None;
@@ -112,15 +170,12 @@ fn parse_prefix(pair: pest::iterators::Pair<Rule>) -> Option<Prefix> {
                 for up in username_pair {
                     match up.as_rule() {
                         Rule::nickname => {
-                            //println!("NickName Pair: {:?}\n\n", up);
                             nickname = String::from(up.as_str());
                         }
                         Rule::user => {
-                            //println!("User Pair: {:?}\n\n", up);
                             user = Some(String::from(up.as_str()));
                         }
                         Rule::host => {
-                            //println!("Host Pair: {:?}\n\n", up);
                             host = Some(String::from(up.as_str()));
                         }
                         _ => {}
@@ -148,12 +203,9 @@ fn parse_command(pair: pest::iterators::Pair<Rule>) -> Command {
     for p in pairs {
         match p.as_rule() {
             Rule::textcommand => {
-                //println!("Command Pair: {:?}\n\n", p);
-                //println!("as_str test: {:?}\n", Command::IrcCommand(String::from(p.as_str())));
                 return Command::IrcCommand(String::from(p.as_str()));
             }
             Rule::numresponse => {
-                //println!("Resp Pair: {:?}\n\n", p);
                 return Command::IrcResponse(String::from(p.as_str()));
             }
             _ => {}
@@ -171,11 +223,9 @@ fn parse_parameters(pair: pest::iterators::Pair<Rule>) -> Option<Parameters> {
     for p in pairs {
         match p.as_rule() {
             Rule::middle => {
-                //println!("Middle Pair: {:?}\n\n", p);
                 middle.push(String::from(p.as_str()));
             }
             Rule::trailing => {
-                //println!("Trailing Pair: {:?}\n\n", p);
                 trailing = Some(String::from(p.as_str()));
             }
             _ => {}
