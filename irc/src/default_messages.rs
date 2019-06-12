@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![allow(unused_variables)]
 
 use irc_derive::IrcCommand;
 use crate::message::IrcMessage;
@@ -338,7 +339,7 @@ struct Watch {
     nicknames: Option<Vec<(String, bool)>>,
 }
 
-#[derive(IrcCommand)]
+// TODO: potentially needs manual implementations
 struct Who {
     name: Option<String>,
     o: bool,
