@@ -5,7 +5,7 @@ use pest::Parser;
 use std::str::FromStr;
 
 pub trait IrcMessage {
-    fn parse_message(message: BaseMessage) -> Result<Box<Self>, Box<std::error::Error>>;
+    fn parse_message(message: BaseMessage) -> Result<Box<Self>, Box<dyn std::error::Error>>;
     fn create_message(&self) -> String;
 }
 

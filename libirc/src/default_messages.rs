@@ -73,15 +73,15 @@ struct Invite {
 
 #[derive(IrcCommand)]
 struct IsOn {
-    #[seperator = " "]
+    #[separator = " "]
     nicknames: Vec<String>,
 }
 
 #[derive(IrcCommand)]
 struct Join {
-    #[seperator = ","]
+    #[separator = ","]
     channels: Vec<String>,
-    #[seperator = ","]
+    #[separator = ","]
     keys: Option<Vec<String>>,
 }
 
@@ -113,7 +113,7 @@ struct Links {
 
 #[derive(IrcCommand)]
 struct List {
-    #[seperator = ","]
+    #[separator = ","]
     channels: Option<Vec<String>>,
     server: Option<String>,
 }
@@ -145,7 +145,7 @@ struct Motd {
 
 #[derive(IrcCommand)]
 struct Names {
-    #[seperator = ","]
+    #[separator = ","]
     channels: Option<Vec<String>>,
     server: Option<String>,
 }
@@ -174,7 +174,7 @@ struct Oper {
 
 #[derive(IrcCommand)]
 struct Part {
-    #[seperator = ","]
+    #[separator = ","]
     channels: Vec<String>,
     message: Option<String>,
 }
@@ -309,7 +309,7 @@ struct User {
 #[derive(IrcCommand)]
 struct UserHost {
     nickname: String,
-    #[seperator = " "]
+    #[separator = " "]
     extra_nicknames: Option<Vec<String>>,
 }
 
@@ -347,7 +347,7 @@ struct Who {
 #[derive(IrcCommand)]
 struct WhoIs {
     server: Option<String>,
-    #[seperator = ","]
+    #[separator = ","]
     nicknames: Vec<String>
 }
 

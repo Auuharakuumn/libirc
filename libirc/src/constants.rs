@@ -19,7 +19,7 @@ impl ReplyCode {
     }
 }
 
-pub fn generate_reply_codes<P: AsRef<Path>>(csv_file: P) -> Result<Vec<ReplyCode>, Box<Error>> {
+pub fn generate_reply_codes<P: AsRef<Path>>(csv_file: P) -> Result<Vec<ReplyCode>, Box<dyn Error>> {
     let mut reader = csv::Reader::from_path(&csv_file)?;
     let mut reply_codes: Vec<ReplyCode> = Vec::new();
 
