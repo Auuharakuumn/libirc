@@ -2,6 +2,8 @@ use syn::Meta;
 use syn::MetaNameValue;
 
 pub fn struct_find_attr_field(struct_: &syn::DataStruct, attr_name: &str) -> Option<syn::Field> {
+    let mut attr_field: Option<syn::Field> = None;
+
     match struct_.fields {
         syn::Fields::Named(ref fields) => {
             for field in fields.named.iter() {
@@ -9,21 +11,28 @@ pub fn struct_find_attr_field(struct_: &syn::DataStruct, attr_name: &str) -> Opt
                     let attr = attr.parse_meta().unwrap();
 
                     match attr {
-                        Meta::NameValue(MetaNameValue{ref ident, ..}) if ident == attr_name => {
-                            return Some(field.clone());
-                        },
+                        //Meta::NameValue(MetaNameValue { ref ident, .. }) if ident == attr_name => {
+                        Meta::NameValue(MetaNameValue { ref ident, .. }) => {
+                            println!("Found {}, looking for {}", ident, attr_name);
+                            if ident == attr_name {
+                                attr_field = Some(field.clone());
+                            }
+                        }
                         _ => {}
                     }
                 }
             }
-        },
+        }
         _ => {}
     }
 
-    None
+    attr_field
 }
 
-pub fn struct_find_multiple_attr_field(struct_: &syn::DataStruct, attr_name: &str) -> Vec<syn::Field> {
+pub fn struct_find_multiple_attr_field(
+    struct_: &syn::DataStruct,
+    attr_name: &str,
+) -> Vec<syn::Field> {
     let mut attr_fields: Vec<syn::Field> = Vec::new();
 
     match struct_.fields {
@@ -33,14 +42,14 @@ pub fn struct_find_multiple_attr_field(struct_: &syn::DataStruct, attr_name: &st
                     let attr = attr.parse_meta().unwrap();
 
                     match attr {
-                        Meta::NameValue(MetaNameValue{ref ident, ..}) if ident == attr_name => {
+                        Meta::NameValue(MetaNameValue { ref ident, .. }) if ident == attr_name => {
                             attr_fields.push(field.clone());
-                        },
+                        }
                         _ => {}
                     }
                 }
             }
-        },
+        }
         _ => {}
     }
 
@@ -59,9 +68,9 @@ pub fn struct_find_arg_fields(struct_: &syn::DataStruct) -> Vec<syn::Field> {
                     let attr = attr.parse_meta().unwrap();
 
                     match attr {
-                        Meta::NameValue(MetaNameValue{ref ident, ..}) => {
+                        Meta::NameValue(MetaNameValue { ref ident, .. }) => {
                             attribute_name = ident.to_string();
-                        },
+                        }
                         _ => {}
                     }
                 }
@@ -70,10 +79,9 @@ pub fn struct_find_arg_fields(struct_: &syn::DataStruct) -> Vec<syn::Field> {
                     arg_fields.push(field.clone());
                 }
             }
-        },
+        }
         _ => {}
     }
 
     arg_fields
 }
-

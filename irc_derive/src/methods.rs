@@ -3,33 +3,79 @@ use syn::export::TokenStream2;
 use syn::Lit;
 use syn::Meta;
 use syn::MetaNameValue;
+use std::fmt;
 
 pub struct CommandFields {
     pub arg_fields: Vec<syn::Field>,
     pub separator_fields: Vec<syn::Field>,
     pub prefix_field: Option<syn::Field>,
-    pub trailing_field: Option<syn::Field>
+    pub trailing_field: Option<syn::Field>,
+}
+
+impl fmt::Display for CommandFields {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let arg_fields: Vec<String> = self.arg_fields.iter().clone().filter(|field|
+            field.ident.is_some()
+        ).map(|field|
+            field.ident.clone().unwrap().to_string()
+        ).collect();
+        
+        let separator_fields: Vec<String> = self.separator_fields.iter().clone().filter(|field|
+            field.ident.is_some()
+        ).map(|field|
+            field.ident.clone().unwrap().to_string()
+        ).collect();
+
+        let prefix_field: Option<String> = match self.prefix_field {
+            Some(ref pf) => {
+                match pf.ident {
+                    Some(ref ident) => Some(ident.to_string()),
+                    None => None
+                }
+            },
+            None => None
+        };
+        
+        let trailing_field: Option<String> = match self.trailing_field {
+            Some(ref pf) => {
+                match pf.ident {
+                    Some(ref ident) => Some(ident.to_string()),
+                    None => None
+                }
+            },
+            None => None
+        };
+
+        let result = format!("{:?}\n{:?}\n{:?}\n{:?}", arg_fields, separator_fields, prefix_field, trailing_field);
+
+        write!(f, "{}", &result)
+    }
 }
 
 impl CommandFields {
     pub fn generate_parse_message(&self) -> TokenStream2 {
         let mut method_sections: Vec<TokenStream2> = Vec::new();
         let mut struct_create_sections: Vec<TokenStream2> = Vec::new();
-        
+
         let option_string: syn::Type = syn::parse_str("Option<String>").unwrap();
         let option_vector: syn::Type = syn::parse_str("Option<Vec<String>>").unwrap();
 
         if let Some(prefix_field) = &self.prefix_field {
             let prefix = prefix_field.ident.clone().unwrap();
             let prefix_build = syn::Ident::new(&format!("{}_build", prefix), prefix.span());
-            
+
             let prefix_define = if prefix_field.ty == option_string {
                 quote! {
-                    let #prefix_build = Some(message.prefix?.to_string());
+                    let #prefix_build = match message.prefix {
+                        Some(p) => Some(p.to_string()),
+                        None => None
+                    };
                 }
             } else {
                 quote! {
-                    let #prefix_build = message.prefix?.to_string();
+                    let #prefix_build = message.prefix.ok_or(
+                        IrcCommandError::new("Prefix required but none found")
+                    )?.to_string();
                 }
             };
 
@@ -44,14 +90,26 @@ impl CommandFields {
         if let Some(trailing_field) = &self.trailing_field {
             let trailing = trailing_field.ident.clone().unwrap();
             let trailing_build = syn::Ident::new(&format!("{}_build", trailing), trailing.span());
+            let trailing_err = syn::Ident::new(&format!("{}_err", trailing), trailing.span());
 
             let trailing_define = if trailing_field.ty == option_string {
                 quote! {
-                    let #trailing_build = Some(message.parameters?.trailing?.to_string());
+                    let #trailing_build = match message.parameters {
+                        Some(p) => {
+                            match p.trailing => {
+                                Some(t) => Some(t.to_string()),
+                                None => None
+                            }
+                        },
+                        None => None
+                    };
                 }
             } else {
                 quote! {
-                    let #trailing_build = message.parameters?.trailing?.to_string();
+                    let #trailing_err = "Trailing argument required but none found";
+
+                    let #trailing_build = message.parameters.ok_or(IrcCommandError::new(trailing_err))?
+                        .trailing.ok_or(IrcCommandError::new(trailing_err))?.to_string();
                 }
             };
 
@@ -65,6 +123,7 @@ impl CommandFields {
 
         let mut arg_sections: Vec<TokenStream2> = Vec::new();
         let mut optional_arg_count: usize = 0;
+        let argument_list = syn::Ident::new("derive_argument_list", proc_macro2::Span::call_site());
 
         for (i, arg_field) in self.arg_fields.iter().enumerate() {
             let arg = arg_field.ident.clone().unwrap();
@@ -76,7 +135,9 @@ impl CommandFields {
                     let attr = attr.parse_meta().unwrap();
 
                     match attr {
-                        Meta::NameValue(MetaNameValue{ref ident, ref lit, ..}) if ident == "separator" => {
+                        Meta::NameValue(MetaNameValue {
+                            ref ident, ref lit, ..
+                        }) if ident == "separator" => {
                             if let Lit::Str(lit) = lit {
                                 separator = Some(lit.value());
                             }
@@ -94,11 +155,11 @@ impl CommandFields {
 
                 let vector = if separator == " " {
                     quote! {
-                        arguments[#i..arguments.len()].to_vec()
+                        #argument_list[#i..#argument_list.len()].to_vec()
                     }
                 } else {
                     quote! {
-                        arguments[#i].split(#separator)
+                        #argument_list[#i].split(#separator).map(|s| String::from(s)).collect()
                     }
                 };
 
@@ -106,7 +167,7 @@ impl CommandFields {
                     optional_arg_count += 1;
 
                     quote! {
-                        let #arg_build: Option<Vec<String>> = if arguments.len() > #i {
+                        let #arg_build: Option<Vec<String>> = if #argument_list.len() > #i {
                             Some(#vector)
                         } else {
                             None
@@ -122,15 +183,15 @@ impl CommandFields {
                     optional_arg_count += 1;
 
                     quote! {
-                        let #arg_build: Option<String> = if arguments.len() > #i {
-                            Some(argments[#i].clone())
+                        let #arg_build: Option<String> = if #argument_list.len() > #i {
+                            Some(#argument_list[#i].clone())
                         } else {
                             None
                         };
                     }
                 } else {
                     quote! {
-                        let #arg_build: String = arguments[#i].clone();
+                        let #arg_build: String = #argument_list[#i].clone();
                     }
                 }
             };
@@ -144,11 +205,14 @@ impl CommandFields {
         let arg_count = arg_sections.len();
         if arg_count > 0 {
             let arg_section = quote! {
-                let arguments = message.parameters?.middle.clone();
-                if (arguments.len() < #arg_count - #optional_arg_count) {
+                let #argument_list = message.parameters.ok_or(
+                    IrcCommandError::new("No message parameters found, but some required")
+                )?.middle.clone();
+
+                if (#argument_list.len() < #arg_count - #optional_arg_count) {
                     let err = format!("Insufficient parameter count for {}", cmd);
-                    
-                    return Err(Box::new(IrcCommandError::new(err)));
+
+                    return Err(IrcCommandError::new(err));
                 }
 
                 #(#arg_sections)*
@@ -159,7 +223,7 @@ impl CommandFields {
 
         quote! {
             #(#method_sections)*
-            
+
             Ok(Box::new(Self {
                 #(#struct_create_sections)*
             }))
@@ -187,7 +251,6 @@ impl CommandFields {
                 }
             };
 
-
             method_sections.push(prefix_section);
         }
 
@@ -205,7 +268,9 @@ impl CommandFields {
                     let attr = attr.parse_meta().unwrap();
 
                     match attr {
-                        Meta::NameValue(MetaNameValue{ref ident, ref lit, ..}) if ident == "separator" => {
+                        Meta::NameValue(MetaNameValue {
+                            ref ident, ref lit, ..
+                        }) if ident == "separator" => {
                             if let Lit::Str(lit) = lit {
                                 separator = Some(lit.value());
                             }
@@ -251,7 +316,7 @@ impl CommandFields {
 
             method_sections.push(arg_section);
         }
-        
+
         if let Some(trailing_field) = &self.trailing_field {
             let trailing = trailing_field.ident.clone().unwrap();
 
@@ -275,4 +340,3 @@ impl CommandFields {
         }
     }
 }
-
