@@ -1,19 +1,19 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-use irc_derive::IrcCommand;
-use crate::message::IrcMessage;
-use crate::message::BaseMessage;
 use crate::error::IrcCommandError;
+use crate::message::BaseMessage;
+use crate::message::IrcMessage;
+use irc_derive::IrcCommand;
 
 #[derive(IrcCommand)]
 struct Admin {
-    target: Option<String>
+    target: Option<String>,
 }
 
 #[derive(IrcCommand)]
 struct Away {
-    message: Option<String>
+    message: Option<String>,
 }
 
 #[derive(IrcCommand)]
@@ -21,7 +21,7 @@ struct CNotice {
     nickname: String,
     channel: String,
     #[trailing]
-    message: String
+    message: String,
 }
 
 #[derive(IrcCommand)]
@@ -29,47 +29,45 @@ struct CPrivMessage {
     nickname: String,
     channel: String,
     #[trailing]
-    message: String
+    message: String,
 }
 
 #[derive(IrcCommand)]
 struct Connect {
     target_server: String,
     port: String,
-    remote_server: Option<String>
+    remote_server: Option<String>,
 }
 
 #[derive(IrcCommand)]
-struct Die {
-}
+struct Die {}
 
 #[derive(IrcCommand)]
 struct Encap {
     #[prefix]
     source: String,
     destination: String,
-    parameters: String
+    parameters: String,
 }
 
 #[derive(IrcCommand)]
 #[command = "ERROR"]
 struct ErrorCommand {
-    error_message: String
+    error_message: String,
 }
 
 #[derive(IrcCommand)]
-struct Help {
-}
+struct Help {}
 
 #[derive(IrcCommand)]
 struct Info {
-    target: Option<String>
+    target: Option<String>,
 }
 
 #[derive(IrcCommand)]
 struct Invite {
     nickname: String,
-    channel: String
+    channel: String,
 }
 
 #[derive(IrcCommand)]
@@ -153,8 +151,7 @@ struct Names {
 
 #[derive(IrcCommand)]
 #[command = "PROTOCTL NAMESX"]
-struct Namesx {
-}
+struct Namesx {}
 
 #[derive(IrcCommand)]
 struct Nick {
@@ -209,16 +206,13 @@ struct Quit {
 }
 
 #[derive(IrcCommand)]
-struct Rehash {
-}
+struct Rehash {}
 
 #[derive(IrcCommand)]
-struct Restart {
-}
+struct Restart {}
 
 #[derive(IrcCommand)]
-struct Rules {
-}
+struct Rules {}
 
 #[derive(IrcCommand)]
 struct Server {
@@ -296,8 +290,7 @@ struct Trace {
 
 #[derive(IrcCommand)]
 #[command = "PROTOCTL UHNAMES"]
-struct UHNames {
-}
+struct UHNames {}
 
 #[derive(IrcCommand)]
 struct User {
@@ -349,7 +342,7 @@ struct Who {
 struct WhoIs {
     server: Option<String>,
     #[separator = ","]
-    nicknames: Vec<String>
+    nicknames: Vec<String>,
 }
 
 #[derive(IrcCommand)]
@@ -358,4 +351,3 @@ struct WhoWas {
     count: Option<String>,
     server: Option<String>,
 }
-

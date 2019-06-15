@@ -1,19 +1,20 @@
-use pest_derive::Parser;
 use pest::error::Error;
 use pest::Parser;
+use pest_derive::Parser;
 
-use std::str::FromStr;
+use crate::error::IrcCommandError;
 use std::fmt;
+use std::str::FromStr;
 
 pub trait IrcMessage {
-    fn parse_message(message: BaseMessage) -> Result<Box<Self>, Box<dyn std::error::Error>>;
+    fn parse_message(message: BaseMessage) -> Result<Box<Self>, IrcCommandError>;
     fn create_message(&self) -> String;
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Command {
     IrcCommand(String),
-    IrcResponse(String)
+    IrcResponse(String),
 }
 
 impl fmt::Display for Command {
@@ -21,7 +22,8 @@ impl fmt::Display for Command {
         let command = match self {
             Command::IrcCommand(cmd) => cmd,
             Command::IrcResponse(cmd) => cmd,
-        }.to_string();
+        }
+        .to_string();
 
         write!(f, "{}", command)
     }
@@ -31,23 +33,23 @@ impl fmt::Display for Command {
 pub struct UserPrefix {
     pub nickname: String,
     pub user: Option<String>,
-    pub host: Option<String>
+    pub host: Option<String>,
 }
 
 impl fmt::Display for UserPrefix {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut prefix = self.nickname.clone();
-        
+
         match self.host {
             Some(ref host) => {
                 match self.user {
                     Some(ref user) => {
                         prefix.push_str(&format!("!{}", user));
-                    },
+                    }
                     None => {}
                 }
                 prefix.push_str(&format!("@{}", host));
-            },
+            }
             None => {}
         }
 
@@ -58,14 +60,14 @@ impl fmt::Display for UserPrefix {
 #[derive(Debug)]
 pub enum Prefix {
     ServerName(String),
-    UserName(UserPrefix)
+    UserName(UserPrefix),
 }
 
 impl fmt::Display for Prefix {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let prefix = match self {
             Prefix::ServerName(p) => p.to_string(),
-            Prefix::UserName(up) => up.to_string()
+            Prefix::UserName(up) => up.to_string(),
         };
 
         write!(f, "{}", prefix)
@@ -75,13 +77,13 @@ impl fmt::Display for Prefix {
 #[derive(Debug)]
 pub struct Parameters {
     pub middle: Vec<String>,
-    pub trailing: Option<String>
+    pub trailing: Option<String>,
 }
 
 impl fmt::Display for Parameters {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let middle = self.middle.join(" ");
-        
+
         if let Some(ref trailing) = self.trailing {
             write!(f, "{} :{}", middle, trailing)
         } else {
@@ -98,7 +100,7 @@ struct IrcParser;
 pub struct BaseMessage {
     pub prefix: Option<Prefix>,
     pub command: Command,
-    pub parameters: Option<Parameters>
+    pub parameters: Option<Parameters>,
 }
 
 impl fmt::Display for BaseMessage {
@@ -148,7 +150,7 @@ impl FromStr for BaseMessage {
         Ok(BaseMessage {
             prefix: prefix,
             command: command,
-            parameters: parameters
+            parameters: parameters,
         })
     }
 }
@@ -166,7 +168,7 @@ fn parse_prefix(pair: pest::iterators::Pair<Rule>) -> Option<Prefix> {
                 let mut nickname: String = String::from("");
                 let mut user: Option<String> = None;
                 let mut host: Option<String> = None;
-                
+
                 for up in username_pair {
                     match up.as_rule() {
                         Rule::nickname => {
@@ -185,7 +187,7 @@ fn parse_prefix(pair: pest::iterators::Pair<Rule>) -> Option<Prefix> {
                 let user_prefix = UserPrefix {
                     nickname: nickname,
                     user: user,
-                    host: host
+                    host: host,
                 };
 
                 return Some(Prefix::UserName(user_prefix));
@@ -234,7 +236,7 @@ fn parse_parameters(pair: pest::iterators::Pair<Rule>) -> Option<Parameters> {
 
     let params = Parameters {
         middle: middle,
-        trailing: trailing
+        trailing: trailing,
     };
 
     return Some(params);

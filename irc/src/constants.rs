@@ -1,5 +1,5 @@
-use std::error::Error;
 use std::convert::AsRef;
+use std::error::Error;
 use std::path::Path;
 
 use crate::error::ConfigReadError;
@@ -7,14 +7,14 @@ use crate::error::ConfigReadError;
 #[derive(Debug)]
 pub struct ReplyCode {
     pub code: u32,
-    pub reply: String
+    pub reply: String,
 }
 
 impl ReplyCode {
     fn new<S: Into<String>>(code: u32, reply: S) -> Self {
         ReplyCode {
             code: code,
-            reply: reply.into()
+            reply: reply.into(),
         }
     }
 }
@@ -29,9 +29,7 @@ pub fn generate_reply_codes<P: AsRef<Path>>(csv_file: P) -> Result<Vec<ReplyCode
         let reply: &str;
 
         match record.get(0) {
-            Some(code_str) => {
-                code = code_str.parse::<u32>()?
-            }
+            Some(code_str) => code = code_str.parse::<u32>()?,
             None => {
                 let error = ConfigReadError::new(&csv_file, format!("invalid record {:?}", record));
                 return Err(Box::new(error));
@@ -39,9 +37,7 @@ pub fn generate_reply_codes<P: AsRef<Path>>(csv_file: P) -> Result<Vec<ReplyCode
         };
 
         match record.get(1) {
-            Some(reply_str) => {
-                reply = reply_str
-            }
+            Some(reply_str) => reply = reply_str,
             None => {
                 let error = ConfigReadError::new(&csv_file, format!("invalid record {:?}", record));
                 return Err(Box::new(error));
@@ -53,4 +49,3 @@ pub fn generate_reply_codes<P: AsRef<Path>>(csv_file: P) -> Result<Vec<ReplyCode
 
     Ok(reply_codes)
 }
-

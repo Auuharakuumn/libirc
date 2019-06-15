@@ -1,20 +1,24 @@
-use std::fmt;
 use std::error::Error;
+use std::fmt;
 use std::path::Path;
 
 pub struct ConfigReadError {
-    description: String
+    description: String,
 }
 
 impl ConfigReadError {
     pub fn new<P: AsRef<Path>, S: AsRef<str>>(file: P, error_string: S) -> Self {
         let file_str = match file.as_ref().to_str() {
             Some(f) => f,
-            None => "UKNOWN"
+            None => "UKNOWN",
         };
 
         ConfigReadError {
-            description: format!("Error parsing config {}: {}", file_str, error_string.as_ref())
+            description: format!(
+                "Error parsing config {}: {}",
+                file_str,
+                error_string.as_ref()
+            ),
         }
     }
 }
@@ -43,14 +47,14 @@ impl fmt::Debug for ConfigReadError {
 }
 
 pub struct IrcCommandError {
-    description: String
+    description: String,
 }
 
 impl IrcCommandError {
     pub fn new<S: Into<String>>(details: S) -> Self {
-       IrcCommandError {
-           description: format!("Error: {}", details.into())
-       }
+        IrcCommandError {
+            description: format!("Error: {}", details.into()),
+        }
     }
 }
 
@@ -75,4 +79,3 @@ impl fmt::Debug for IrcCommandError {
         write!(f, "{{ file: {}, line: {} }}", file!(), line!())
     }
 }
-
